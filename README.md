@@ -1,5 +1,5 @@
 # mapjs
-A JavaScript library to help draw map on HTML5 canvas. Map data can be defined in JSON file. Implements functionality to set current and destination locations as well as show shortest path.
+A JavaScript library to help draw map on HTML5 canvas. Map data is defined in JSON file. Implements functionality to set current and destination locations as well as show shortest path.
 
 ### Getting Started
 Download the map.js file and include in your HTML.
@@ -15,17 +15,12 @@ This library is build upon HTML5 canvas. Therefore first start with defining a c
 <canvas id="mapJsCanvas" width="400" height="300">This browser doesnot support this feature.</canvas>
 ```
 
-Entire map is rendered on this canvas so width and hight of map can be changed at runtime using following JavaScript statement:
+Width and hight of map can be changed at runtime using following JavaScript statement:
 ```
 mapJsApi.resize(sizeX, sizeY);
 ```
 
-After setting the size, a map can be drawn using following two options:
-* Define map data in JSON format
-* Draw map regions, ways, and nodes using API functions
-
-#### Define map data in JSON format
-Defining map data in JSON format provides easiest way to create complex map.
+Map data is defined in JSON format. This allows easiest way to create, store, and retrieve complex map. This map library is best suitable for indoor maps. Consider creating saperate JSON map data for different parts of a building. For example, if a building has two or more floors then create saperate JSOD map data for each floor. Further, it would be good idea if a very large floor can be seperated into different regions each defined using seperate JSON map data.  
 
 Following is a sample JSON map file:
 ```
@@ -75,70 +70,27 @@ Following is a sample JSON map file:
             "points": [ { "x": 106, "y": 82 }, { "x": 150, "y": 82 }, { "x": 150, "y": 130 }, { "x": 106, "y": 130 } ],
             "color": "dimgray"
         }
-    ],
-    "nodes": [
-        {
-            "point": { "x": 114, "y": 66 },
-            "name": "Mike",
-            "wayPoints": [ { "x": 100, "y": 78 } ]
-        },
-        {
-            "point": { "x": 114, "y": 34 },
-            "name": "Joe",
-            "wayPoints": [ { "x": 100, "y": 12 } ]
-        },
-        {
-            "point": { "x": 136, "y": 20 },
-            "name": "Evan",
-            "wayPoints": [ { "x": 154, "y": 12 } ]
-        },
-        {
-            "point": { "x": 136, "y": 52 },
-            "name": "Glen",
-            "wayPoints": [ { "x": 154, "y": 78 } ]
-        },
-        {
-            "point": { "x": 114, "y": 100 },
-            "name": "Linda",
-            "wayPoints": [ { "x": 130, "y": 78 } ]
-        }
     ]
 }
 ```
 
-#### Draw map regions, ways, and nodes using API functions
-A set of API functions are exposed to allow programatically draw the map.
-
-######backgroundColor()
-Use this function to change background color for map by specifying any valid HTML color name or HEX or RGB value. Example:
+Loading JSON map data is easy as shown in following example:
 ```
-mapJsApi.backgroundColor("red"); //by color name
-mapJsApi.backgroundColor("#FF0000"); //by HEX value
-mapJsApi.backgroundColor("rgb(255,0,0)"); //by RGB value
+var data = retrieveMapJSONData(); //just an illustration of defining a variable to store map JSON data
+mapJsApi.drawMap(data); //this statement will instantly render the map on HTML canvas element
 ```
 
-######A Point on the map
-This library uses "Point", a pair of x and y values, as basic unit of drawing. Following example shows declaring a point:
+Showing current location on map is illustrated in following example:
 ```
-var point1 = new mapJsApi.Point(10, 10);
-```
-
-A map is made of a set of regions, ways, and nodes.
-
-######Drawing a Region
-Region is defined by 3 attributes: 
-* name
-* points: array of Point objects
-* color
-
-Example:
-```
-var points = [new mapJsApi.Point(128, 74), 
-            new mapJsApi.Point(150, 74), 
-            new mapJsApi.Point(150, 40), 
-            new mapJsApi.Point(128, 50)
-            ];
-var region1 = new mapJsApi.Region("Evans", points, "darkgray");
-mapJsApi.drawRegion(region1);
+mapJsApi.setCurrentLocation(new mapJsApi.Point(40, 12));
 ```
 
+Similarly destination location can be shown on map as illustrated in following example:
+```
+mapJsApi.setDestinationLocation(new mapJsApi.Point(106, 130));
+```
+
+A shortest path can be drawn from current  location to destination location by writing following statement:
+```
+mapJsApi.drawRouteToDestinationLocation();
+```
