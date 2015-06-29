@@ -22,7 +22,7 @@ mapJsApi.resize(sizeX, sizeY);
 
 Map data is defined in JSON format. This allows easiest way to create, store, and retrieve complex map. This map library is best suitable for indoor maps. Consider creating saperate JSON map data for different parts of a building. For example, if a building has two or more floors then create saperate JSOD map data for each floor. Further, it would be good idea if a very large floor can be seperated into different regions each defined using seperate JSON map data.  
 
-Following is a sample JSON map file:
+Following is a sample JSON map data:
 ```
 {
     "backgroundColor": "white",
@@ -73,6 +73,10 @@ Following is a sample JSON map file:
     ]
 }
 ```
+
+Following are some important points to be aware of while defining JSON map data:
+* Always define ways as arcs - do not define circular ways. Shortest path algorithm currently implemented in this library does not handle circular path and may enter into infinite loop.
+* Region names are automatically displayed on the map. However way names are ignored and not displayed on map in current implementation.
 
 Loading JSON map data is easy as shown in following example:
 ```
