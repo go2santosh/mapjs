@@ -7,9 +7,12 @@
 // Further details available at https://github.com/go2santosh/mapjs
 //
 // Author: Santosh Sharma
-// Version: 1.1
+// Version: 1.2
 // Creation Date: June 15, 2015
-// Revision Date: June 28, 2015
+// Revision Date: June 29, 2015
+//
+// New in version 1.2:
+// - Usage flexibility improvements
 //
 // New in version 1.1:
 // - Shortest path efficiency and reliability improvements
@@ -19,29 +22,43 @@
 
 var mapJsApi = (function () {
     //private members
+    var labelFontSize = 10;
     var labelFontName = "Arial";
+    var labelFontColor = "black";
+    var backgroundColor = "DarkSeaGreen";
+    var regionColor = "PaleGoldenRod";
+    var regionBorderColor = "snow";
+    var regionShadowColor = "snow";
+    var wayColor = "ivory";
+    var shortestWayColor = "orange";
 
     var scale = { x: 400, y: 300 };
     var mapData;
-    var currentLocation = null;
+    var startLocation = null;
     var destinationLocation = null;
     var navigationPaths = [];
     var accomodatedLabels = [];
-    var mapJsCanvas = document.getElementById("mapJsCanvas");
+    var mapJsCanvas;
+    var mapJsContext;
 
     //initialize canvas
-    if (mapJsCanvas.getContext) {
-        var mapJsContext = mapJsCanvas.getContext("2d");
-        mapJsCanvas.width = scale.x;
-        mapJsCanvas.height = scale.y;
-        mapJsCanvas.style.position = "absolute";
-        mapJsCanvas.style.left = (mapJsCanvas.parentElement.clientWidth - mapJsCanvas.width) / 2 + "px";
+    function initialize(canvasId) {
+        mapJsCanvas = document.getElementById(canvasId);
+        if (mapJsCanvas) {
+            if (mapJsCanvas.getContext) {
+                mapJsContext = mapJsCanvas.getContext("2d");
+                mapJsCanvas.width = scale.x;
+                mapJsCanvas.height = scale.y;
+                mapJsCanvas.style.position = "absolute";
+                mapJsCanvas.style.left = (mapJsCanvas.parentElement.clientWidth - mapJsCanvas.width) / 2 + "px";
+            }
+            else {
+                //Canvas not supported
+                alert("This browser doesnot support this feature.");
+            }
+        }
     }
-    else {
-        //Canvas not supported
-        alert("This browser doesnot support this feature.");
-    }
-
+    
     //background color
     function setBackgroundColor(color) {
         mapJsContext.fillStyle = color;
@@ -65,7 +82,7 @@ var mapJsApi = (function () {
     }
 
     //drawRect method
-    function drawArc(points) {
+    function drawArc(points, arcColor) {
         if (points) {
             if (points.length > 0) {
                 mapJsContext.beginPath();
@@ -74,7 +91,7 @@ var mapJsApi = (function () {
                     mapJsContext.lineTo(getScaledX(points[i].x), getScaledY(points[i].y));
                 }
                 mapJsContext.lineWidth = "3";
-                mapJsContext.strokeStyle = "orange";
+                mapJsContext.strokeStyle = arcColor;
                 mapJsContext.stroke();
             }
         }
@@ -91,11 +108,16 @@ var mapJsApi = (function () {
                 mapJsContext.lineTo(getScaledX(points[i].x), getScaledY(points[i].y));
             }
             mapJsContext.closePath();
-            mapJsContext.strokeStyle = "snow";
+            mapJsContext.strokeStyle = regionBorderColor;
             mapJsContext.lineWidth = "0.5";
             mapJsContext.stroke();
-            mapJsContext.fillStyle = region.color;
-            mapJsContext.shadowColor = "snow";
+            if (region.color) {
+                mapJsContext.fillStyle = region.color;
+            }
+            else {
+                mapJsContext.fillStyle = regionColor;
+            }
+            mapJsContext.shadowColor = regionShadowColor;
             mapJsContext.shadowBlur = "2";
             mapJsContext.shadowOffsetX = "1";
             mapJsContext.shadowOffsetY = "1";
@@ -105,8 +127,8 @@ var mapJsApi = (function () {
 
     //draw text
     function drawText(point, text) {
-        mapJsContext.fillStyle = "black";
-        mapJsContext.font = "10px Arial";
+        mapJsContext.fillStyle = labelFontColor;
+        mapJsContext.font = labelFontSize + "px " + labelFontName;
         mapJsContext.fillText(text, getScaledX(point.x), getScaledY(point.y));
     }
 
@@ -223,13 +245,13 @@ var mapJsApi = (function () {
     //find shortest route from current location to destination location
     function getShortestPath() {
         var path = [];
-        if (currentLocation && destinationLocation) {
+        if (startLocation && destinationLocation) {
             //find start and end point
-            var startPoint = findNearestWayPoint(currentLocation);
+            var startPoint = findNearestWayPoint(startLocation);
             var endPoint = findNearestWayPoint(destinationLocation);
             //find all possible navigation paths
             var routePoints = [];
-            path.push(currentLocation);
+            path.push(startLocation);
             navigationPaths = [];
             if (calculateDistance(startPoint, endPoint) != 0) {
                 findNavigationPaths(-1, startPoint, endPoint, routePoints);
@@ -437,6 +459,10 @@ var mapJsApi = (function () {
                 color: color
             };
         },
+        //initialize canvas
+        initialize: function (canvasId) {
+            initialize(canvasId);
+        },
         //resize method
         resize: function (width, height) {
             mapJsCanvas.width = width;
@@ -459,8 +485,23 @@ var mapJsApi = (function () {
                     setScale(mapData.scale.width, mapData.scale.height);
                 }
 
-                //set background color
-                setBackgroundColor(mapData.backgroundColor);
+                if (mapData.backgroundColor) {
+                    //set background color
+                    setBackgroundColor(mapData.backgroundColor);
+                }
+                //set other properties
+                if (mapData.labelFontSize) {
+                    labelFontSize = mapData.labelFontSize;
+                }
+                if (mapData.labelFontName) {
+                    labelFontName = mapData.labelFontName;
+                }
+                if (mapData.regionColor) {
+                    regionColor = regionColor;
+                }
+                if (mapData.wayColor) {
+                    wayColor = wayColor;
+                }                
 
                 //draw regions
                 if (mapData.regions) {//draw regions if available
@@ -471,7 +512,7 @@ var mapJsApi = (function () {
 
                 //draw ways
                 if (mapData.ways) {
-                    mapJsContext.strokeStyle = "ivory";
+                    mapJsContext.strokeStyle = wayColor;
                     mapJsContext.lineCap = "round";
                     mapJsContext.lineWidth = "4";
                     for (var i = 0; i < mapData.ways.length; i++) {
@@ -492,7 +533,7 @@ var mapJsApi = (function () {
                     for (var i = 0; i < mapData.regions.length; i++) {
                         //find center point
                         var point = getCenterPoint(mapData.regions[i].points);
-                        accomodateLabel(point, 10, "black", mapData.regions[i].name);
+                        accomodateLabel(point, labelFontSize, labelFontColor, mapData.regions[i].name);
                     }
                 }
 
@@ -506,13 +547,39 @@ var mapJsApi = (function () {
                 */
             }
         },
-        //set current location
-        setCurrentLocation: function (point) {
-            if (!currentLocation) {
-                currentLocation = { "x": 0, "y": 0 };
+        //set start region
+        setStartRegion: function (regionName) {
+            var region;
+            for (var i = 0; i < mapData.regions.length; i++) {
+                if (mapData.regions[i].name == regionName) {
+                    region = mapData.regions[i];
+                }
             }
-            currentLocation = point;
-            showLocation(currentLocation, "green");
+            if (region) {
+                this.setStartLocation(getCenterPoint(region.points));
+                this.setRegionColor(region.name, "lightgreen");
+            }
+        },
+        //set start location
+        setStartLocation: function (point) {
+            if (!startLocation) {
+                startLocation = { "x": 0, "y": 0 };
+            }
+            startLocation = point;
+            showLocation(startLocation, "green");
+        },
+        //set destination region
+        setDestinationRegion: function(regionName){
+            var region;
+            for (var i = 0; i < mapData.regions.length; i++) {
+                if (mapData.regions[i].name == regionName) {
+                    region = mapData.regions[i];
+                }
+            }
+            if (region) {
+                this.setDestinationLocation(getCenterPoint(region.points));
+                this.setRegionColor(region.name, "lightpink");
+            }
         },
         //set destination location
         setDestinationLocation: function (point) {
@@ -525,9 +592,19 @@ var mapJsApi = (function () {
         //get route to destination position
         drawRouteToDestinationLocation: function () {
             var routePoints = getShortestPath();
-            drawArc(routePoints);
-            showLocation(currentLocation, "green");
+            drawArc(routePoints, shortestWayColor);
+            showLocation(startLocation, "green");
             showLocation(destinationLocation, "red");
+        },
+        //highlight region
+        setRegionColor: function (regionName, color) {
+            for (var i = 0; i < mapData.regions.length; i++) {
+                if (mapData.regions[i].name == regionName) {
+                    mapData.regions[i].color = color;
+                    this.redraw();
+                    break;
+                }
+            }
         }
     };
 })();
